@@ -1,6 +1,11 @@
-var C='abide321-v2.1';
-var F=['./','./index.html','./manifest.json','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./hero.jpg','./lang/zs.json','./lang/en.json'];
-self.addEventListener('install',function(e){e.waitUntil(caches.open(C).then(function(c){return c.addAll(F);}));self.skipWaiting();});
-self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(k){return Promise.all(k.filter(function(x){return x!==C;}).map(function(x){return caches.delete(x);}));}));self.clients.claim();});
-self.addEventListener('fetch',function(e){if(e.request.method!=='GET'||e.request.url.indexOf(self.location.origin)!==0)return;
-e.respondWith(fetch(e.request).then(function(r){var cp=r.clone();caches.open(C).then(function(c){c.put(e.request,cp);});return r;}).catch(function(){return caches.match(e.request).then(function(r){return r||caches.match('./index.html');});}));});
+/* 321屬靈生活 service worker — 版本 2.2.10042132（每次建置自動更新，舊版會自動被取代） */
+var C='abide321-2.2.10042132';
+var F=['./','./index.html','./manifest.json','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./hero.jpg'];
+self.addEventListener('install',function(e){self.skipWaiting();e.waitUntil(caches.open(C).then(function(c){return Promise.all(F.map(function(u){return c.add(new Request(u,{cache:'reload'}))['catch'](function(){});}));}));});
+self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(k){return Promise.all(k.filter(function(x){return x!==C;}).map(function(x){return caches['delete'](x);}));}).then(function(){return self.clients.claim();}));});
+self.addEventListener('message',function(e){if(e.data==='skip')self.skipWaiting();});
+self.addEventListener('fetch',function(e){var r=e.request;if(r.method!=='GET'||r.url.indexOf(self.location.origin)!==0)return;
+  if(r.url.indexOf('version.json')>=0){e.respondWith(fetch(r,{cache:'no-store'}));return;}
+  var nav=r.mode==='navigate'||/\/(index\.html)?(\?.*)?$/.test(r.url);
+  e.respondWith(fetch(nav?new Request(r.url,{cache:'no-store'}):r).then(function(res){if(res&&res.ok){var cp=res.clone();caches.open(C).then(function(c){c.put(r,cp);});}return res;})['catch'](function(){
+    return caches.match(r,{ignoreSearch:true}).then(function(x){return x||(nav?caches.match('./index.html'):undefined);});}));});
